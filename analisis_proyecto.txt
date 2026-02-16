@@ -1,0 +1,64 @@
+============================================================
+ANÁLISIS DE PROYECTO: Sistema de Gestión de Taller Mecánico
+============================================================
+
+FECHA: 13/02/2026
+PROYECTO: Sistema de Gestión de Taller Mecánico (PHP/MySQL)
+
+------------------------------------------------------------
+1. RESUMEN GENERAL
+------------------------------------------------------------
+El proyecto es una aplicación web desarrollada en PHP nativo orientada a la gestión de un taller mecánico. Cuenta con una arquitectura semi-MVC (Modelo-Vista-Controlador) donde se separa la lógica de negocio (carpeta 'controladores') de la presentación (vistas en carpetas por rol como 'admin', 'recepcionista', etc.).
+
+Destaca positivamente por la implementación de medidas de seguridad que a menudo se pasan por alto en proyectos de esta envergadura, como la protección contra fuerza bruta y el uso de tokens CSRF.
+
+------------------------------------------------------------
+2. CALIFICACIÓN
+------------------------------------------------------------
+>> PUNTUACIÓN: 8.5 / 10
+
+JUSTIFICACIÓN:
+El código es limpio, ordenado y, sobre todo, seguro en sus aspectos fundamentales. No obtiene un 10 debido a que no utiliza un framework moderno (lo cual facilitaría la escalabilidad), el uso de credenciales por defecto en la conexión y la mezcla de CSS/HTML en algunos archivos, pero para ser PHP nativo, es una implementación muy sólida y profesional.
+
+------------------------------------------------------------
+3. PUNTOS FUERTES (PROS)
+------------------------------------------------------------
+[+] SEGURIDAD ROBUSTA: 
+    - Se utilizan sentencias preparadas (PDO) en todas las consultas SQL, eliminando el riesgo de inyección SQL.
+    - Implementación de tokens CSRF en formularios críticos (como 'agregar_cliente.php'), protegiendo contra falsificación de peticiones.
+    - Sistema de bloqueo temporal tras intentos fallidos de login para mitigar ataques de fuerza bruta.
+
+[+] VALIDACIÓN DE DATOS:
+    - Excelente validación en el lado del servidor. No confía solo en el frontend. Verifica tipos de datos, longitudes y formatos (regex para nombres, filter_var para emails).
+
+[+] ORGANIZACIÓN DEL CÓDIGO:
+    - Estructura de carpetas intuitiva. Separación clara entre archivos de conexión, controladores y vistas.
+    - Uso correcto de sesiones y redirecciones basadas en roles (Admin, Mecánico, Recepcionista).
+
+[+] UX/UI (EXPERIENCIA DE USUARIO):
+    - Feedback claro al usuario mediante variables de sesión para mostrar errores o mensajes de éxito.
+    - Interfaz moderna y responsive (adaptable a móviles) usando CSS personalizado y FontAwesome.
+
+------------------------------------------------------------
+4. PUNTOS DÉBILES (CONTRAS) Y MEJORAS
+------------------------------------------------------------
+[-] CONFIGURACIÓN DE BASE DE DATOS:
+    - El archivo 'conexion/bd.php' utiliza el usuario 'root' sin contraseña. Esto es aceptable para desarrollo local en XAMPP, pero es una vulnerabilidad crítica si se sube así a producción.
+    - RECOMENDACIÓN: Usar variables de entorno (.env) para las credenciales.
+
+[-] FRONTEND ACOPLADO:
+    - Archivos como 'index.php' y 'login.php' tienen bloques grandes de CSS incrustado (<style>).
+    - RECOMENDACIÓN: Mover estos estilos a archivos .css externos (ej. style.css) para mejorar el orden y permitir que el navegador guarde en caché los estilos.
+
+[-] MANTENIBILIDAD A LARGO PLAZO:
+    - Al ser PHP nativo sin un motor de plantillas (como Blade o Twig), si se quiere cambiar el diseño del encabezado o menú, habría que editar múltiples archivos.
+    - RECOMENDACIÓN: Crear componentes reutilizables para header/footer (aunque ya se usa 'require', un sistema de templates sería mejor).
+
+[-] HARDCODING:
+    - Valores como el tiempo de espera (60 segundos) en el login están escritos directamente en el código.
+    - RECOMENDACIÓN: Definir estos valores en un archivo de configuración general.
+
+------------------------------------------------------------
+CONCLUSIÓN
+------------------------------------------------------------
+Es un proyecto bien construido, funcional y seguro. Supera el estándar promedio de aplicaciones PHP nativas al incluir protecciones de seguridad proactivas. Con pequeños ajustes en la gestión de configuración y separación de estilos, estaría listo para un entorno productivo de pequeña/mediana escala.
