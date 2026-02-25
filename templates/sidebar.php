@@ -27,6 +27,36 @@
 
             // 4. Contamos el número de notificaciones para el badge rojo
             $count_notif = count($notificaciones);
+
+            // 5. LÓGICA PREVENTIVA: Buscar repuestos con stock < 10 que no tengan notificación activa
+            $stmt_low_stock = $conexion->prepare("SELECT id_repuesto, nombre, stock FROM repuestos WHERE stock < 10");
+            $stmt_low_stock->execute();
+            $repuestos_bajos = $stmt_low_stock->fetchAll(PDO::FETCH_OBJ);
+
+            foreach ($repuestos_bajos as $rb) {
+                $titulo_preventivo = "Bajo Stock: " . $rb->nombre;
+                // Verificar si ya existe alguna notificación de este repuesto (leída o no)
+                // Esto evita que la barra lateral re-inserte la notificación cada vez que se navega
+                $stmt_check_prev = $conexion->prepare("SELECT id_notificacion FROM notificaciones WHERE titulo = :titulo");
+                $stmt_check_prev->bindParam(':titulo', $titulo_preventivo, PDO::PARAM_STR);
+                $stmt_check_prev->execute();
+
+                if (!$stmt_check_prev->fetch()) {
+                    // Si no existe, la creamos (Origen: Sistema/Admin)
+                    $mensaje_prev = "El repuesto " . $rb->nombre . " tiene un stock bajo (" . $rb->stock . " unidades).";
+                    $stmt_insert_prev = $conexion->prepare("INSERT INTO notificaciones (titulo, mensaje, tipo, id_usuario_origen, rol_origen) VALUES (:titulo, :mensaje, 'warning', :id_user, 'admin')");
+                    $stmt_insert_prev->bindParam(':titulo', $titulo_preventivo, PDO::PARAM_STR);
+                    $stmt_insert_prev->bindParam(':mensaje', $mensaje_prev, PDO::PARAM_STR);
+                    $stmt_insert_prev->bindParam(':id_user', $_SESSION['id_usuario'], PDO::PARAM_INT);
+                    $stmt_insert_prev->execute();
+
+                    // Recargar notificaciones si insertamos una nueva para que aparezca de inmediato
+                    $stmt_reload = $conexion->prepare("SELECT * FROM notificaciones WHERE leido = 'No' ORDER BY fecha DESC LIMIT 5");
+                    $stmt_reload->execute();
+                    $notificaciones = $stmt_reload->fetchAll(PDO::FETCH_OBJ);
+                    $count_notif = count($notificaciones);
+                }
+            }
             ?>
 
             <!-- ==========================================

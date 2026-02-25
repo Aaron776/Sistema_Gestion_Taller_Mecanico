@@ -83,6 +83,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id_repuesto']) && isse
             $sql->bindParam(':id_repuesto', $id_repuesto, PDO::PARAM_INT);
             $sql->execute();
 
+            // 🔍 VERIFICAR STOCK BAJO PARA NOTIFICACIÓN
+            if ($stock < 10) {
+                // Verificar si ya existe una notificación de stock bajo para este repuesto que no haya sido leída
+                $titulo_notif_stock = "Bajo Stock: " . $nombre_repuesto;
+                $stmt_check_notif = $conexion->prepare("SELECT id_notificacion FROM notificaciones WHERE titulo = :titulo AND leido = 'No'");
+                $stmt_check_notif->bindParam(':titulo', $titulo_notif_stock, PDO::PARAM_STR);
+                $stmt_check_notif->execute();
+
+                if (!$stmt_check_notif->fetch()) {
+                    $mensaje_stock = "El repuesto " . $nombre_repuesto . " tiene un stock bajo (" . $stock . " unidades). Se recomienda reabastecer.";
+                    $tipo_notif_stock = 'warning';
+
+                    // Como el admin es quien edita, el origen es el propio admin
+                    $id_usuario_origen = $_SESSION['id_usuario'];
+                    $rol_origen = $_SESSION['rol'];
+
+                    $stmt_notif_stock = $conexion->prepare("INSERT INTO notificaciones (titulo, mensaje, tipo, id_usuario_origen, rol_origen) VALUES (:titulo, :mensaje, :tipo, :id_usuario, :rol)");
+                    $stmt_notif_stock->bindParam(':titulo', $titulo_notif_stock, PDO::PARAM_STR);
+                    $stmt_notif_stock->bindParam(':mensaje', $mensaje_stock, PDO::PARAM_STR);
+                    $stmt_notif_stock->bindParam(':tipo', $tipo_notif_stock, PDO::PARAM_STR);
+                    $stmt_notif_stock->bindParam(':id_usuario', $id_usuario_origen, PDO::PARAM_INT);
+                    $stmt_notif_stock->bindParam(':rol', $rol_origen, PDO::PARAM_STR);
+                    $stmt_notif_stock->execute();
+                }
+            }
+
             $_SESSION['exito'] = "Repuesto editado correctamente";
             header("Location: ../admin/editar_repuesto.php?id_repuesto=" . urlencode(base64_encode($id_repuesto)));
             exit();

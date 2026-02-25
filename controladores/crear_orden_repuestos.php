@@ -59,7 +59,44 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id_repuesto']) && isse
 
         $id_orden_repuesto = $conexion->lastInsertId();
 
-        // 🔔 INSERTAR NOTIFICACIÓN PARA EL ADMIN
+        // 🛠️ DESCONTAR STOCK DEL REPUESTO
+        $stmt_update_stock = $conexion->prepare("UPDATE repuestos SET stock = stock - :cantidad WHERE id_repuesto = :id_repuesto");
+        $stmt_update_stock->bindParam(':cantidad', $cantidad, PDO::PARAM_INT);
+        $stmt_update_stock->bindParam(':id_repuesto', $id_repuesto, PDO::PARAM_INT);
+        $stmt_update_stock->execute();
+
+        // 🔍 VERIFICAR STOCK BAJO PARA NOTIFICACIÓN
+        $stmt_check_stock = $conexion->prepare("SELECT nombre, stock FROM repuestos WHERE id_repuesto = :id_repuesto");
+        $stmt_check_stock->bindParam(':id_repuesto', $id_repuesto, PDO::PARAM_INT);
+        $stmt_check_stock->execute();
+        $repuesto_info = $stmt_check_stock->fetch(PDO::FETCH_OBJ);
+
+        if ($repuesto_info && $repuesto_info->stock < 10) {
+            // Verificar si ya existe una notificación de stock bajo para este repuesto que no haya sido leída
+            $titulo_notif_stock = "Bajo Stock: " . $repuesto_info->nombre;
+            $stmt_check_notif = $conexion->prepare("SELECT id_notificacion FROM notificaciones WHERE titulo = :titulo AND leido = 'No'");
+            $stmt_check_notif->bindParam(':titulo', $titulo_notif_stock, PDO::PARAM_STR);
+            $stmt_check_notif->execute();
+
+            if (!$stmt_check_notif->fetch()) {
+                $mensaje_stock = "El repuesto " . $repuesto_info->nombre . " tiene un stock bajo (" . $repuesto_info->stock . " unidades). Se recomienda reabastecer.";
+                $tipo_notif_stock = 'warning';
+
+                // Usamos el ID de usuario de la sesión para el origen
+                $id_usuario_origen = $_SESSION['id_usuario'];
+                $rol_origen = $_SESSION['rol'];
+
+                $stmt_notif_stock = $conexion->prepare("INSERT INTO notificaciones (titulo, mensaje, tipo, id_usuario_origen, rol_origen) VALUES (:titulo, :mensaje, :tipo, :id_usuario, :rol)");
+                $stmt_notif_stock->bindParam(':titulo', $titulo_notif_stock, PDO::PARAM_STR);
+                $stmt_notif_stock->bindParam(':mensaje', $mensaje_stock, PDO::PARAM_STR);
+                $stmt_notif_stock->bindParam(':tipo', $tipo_notif_stock, PDO::PARAM_STR);
+                $stmt_notif_stock->bindParam(':id_usuario', $id_usuario_origen, PDO::PARAM_INT);
+                $stmt_notif_stock->bindParam(':rol', $rol_origen, PDO::PARAM_STR);
+                $stmt_notif_stock->execute();
+            }
+        }
+
+        // 🔔 INSERTAR NOTIFICACIÓN PARA EL ADMIN (Sobre la creación de la orden)
         if (isset($_SESSION['rol']) && in_array($_SESSION['rol'], ['recepcionista', 'mecanico'])) {
             $titulo = "Nueva Orden de Repuesto";
             $mensaje = "El mecanico " . $_SESSION['nombre'] . " " . $_SESSION['apellido'] . " ha creado la orden OR-" . date('Y') . "-" . $id_orden_repuesto;
