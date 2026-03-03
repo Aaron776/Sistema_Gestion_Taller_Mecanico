@@ -62,3 +62,40 @@ El código es limpio, ordenado y, sobre todo, seguro en sus aspectos fundamental
 CONCLUSIÓN
 ------------------------------------------------------------
 Es un proyecto bien construido, funcional y seguro. Supera el estándar promedio de aplicaciones PHP nativas al incluir protecciones de seguridad proactivas. Con pequeños ajustes en la gestión de configuración y separación de estilos, estaría listo para un entorno productivo de pequeña/mediana escala.
+
+------------------------------------------------------------
+5. ANÁLISIS DE LÓGICA Y NEGOCIO
+------------------------------------------------------------
+El sistema refleja fielmente el flujo de trabajo de un taller mecánico real:
+- RECEPCIÓN: El proceso inicia con el registro del cliente y su vehículo, lo que asegura la trazabilidad desde el primer contacto.
+- OPERACIÓN: La creación de Ordenes de Trabajo (OT) permite asignar mecánicos específicos, lo que facilita el control de tiempos y responsabilidades.
+- SERVICIOS Y REPUESTOS: La posibilidad de añadir servicios y repuestos a una OT de forma independiente es un acierto lógico, ya que permite una cotización y facturación detallada.
+- FLUJO DE ESTADOS: El manejo de estados (pendiente, en proceso, finalizada, rechazada) es correcto y permite a la administración tener una visión clara del taller en tiempo real.
+
+------------------------------------------------------------
+6. FUNCIONALIDADES FALTANTES (ROADMAP RECOMENDADO)
+------------------------------------------------------------
+A pesar de su solidez, para elevar el sistema a un nivel profesional "llave en mano", se recomienda añadir:
+
+[ ] MÓDULO DE CAJA Y PAGOS:
+    - Registro de pagos recibidos (efectivo, tarjeta, transferencia).
+    - Generación de facturas o recibos en PDF.
+    - Control de abonos o pagos parciales.
+
+[ ] CHECKLIST DIGITAL DE INGRESO:
+    - Formulario para marcar daños previos, nivel de combustible y objetos dejados en el vehículo al recibirlo (evita reclamos injustificados).
+
+[ ] HISTORIAL DE VEHÍCULO:
+    - Vista centralizada para ver el historial de intervenciones de una placa específica, independientemente del cliente.
+
+[ ] GESTIÓN DE PROVEEDORES:
+    - Registro de compras de repuestos para alimentar el stock automáticamente y controlar costos.
+
+[ ] ALERTAS DE MANTENIMIENTO PREVENTIVO:
+    - Sistema que notifique al cliente (vía email/WhatsApp) su próximo mantenimiento basado en la fecha de su última visita.
+
+------------------------------------------------------------
+REVISIÓN FINAL DE NEGOCIO
+------------------------------------------------------------
+El sistema es una herramienta pragmática y funcional. La lógica de negocio está bien estructurada y el flujo de datos es coherente. Añadiendo los módulos de pagos y el checklist de ingreso, el proyecto pasaría de ser una excelente herramienta de gestión interna a una solución integral de negocio lista para un mercado competitivo.
+
