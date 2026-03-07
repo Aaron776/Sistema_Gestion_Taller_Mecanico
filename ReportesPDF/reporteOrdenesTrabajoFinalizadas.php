@@ -13,16 +13,47 @@ if (!isset($_SESSION['rol']) || ($_SESSION['rol'] !== 'admin' && $_SESSION['rol'
     exit("Acceso denegado");
 }
 
-$id_mecanico = $_SESSION['id_usuario'];
+$id_usuario = $_SESSION['id_usuario'];
+$rol = $_SESSION['rol'];
 
-$sql = $conexion->prepare("SELECT ordenes_trabajo.id_orden, vehiculos.marca, vehiculos.placa, CONCAT(clientes.nombre, ' ', clientes.apellido) as nombre_cliente, CONCAT(usuarios.nombre, ' ', usuarios.apellido) as nombre_mecanico, ordenes_trabajo.fecha_creacion, ordenes_trabajo.fecha_entrega, ordenes_trabajo.estado FROM ordenes_trabajo INNER JOIN clientes ON ordenes_trabajo.id_cliente = clientes.id_cliente INNER JOIN vehiculos ON ordenes_trabajo.id_vehiculo = vehiculos.id_vehiculo INNER JOIN usuarios ON ordenes_trabajo.id_usuario_asignado = usuarios.id_usuario WHERE ordenes_trabajo.id_usuario_asignado = :id_mecanico AND lower(ordenes_trabajo.estado) IN ('finalizada', 'finalizado', 'completado') ORDER BY ordenes_trabajo.id_orden DESC");
-$sql->bindParam(':id_mecanico', $id_mecanico, PDO::PARAM_INT);
+if ($rol === 'admin' || $rol === 'recepcionista') {
+    // Si es administrador o recepcionista, ve todas las órdenes finalizadas
+    $sql = $conexion->prepare("
+        SELECT ordenes_trabajo.id_orden, vehiculos.marca, vehiculos.placa, 
+               CONCAT(clientes.nombre, ' ', clientes.apellido) as nombre_cliente, 
+               CONCAT(usuarios.nombre, ' ', usuarios.apellido) as nombre_mecanico, 
+               ordenes_trabajo.fecha_creacion, ordenes_trabajo.fecha_entrega, ordenes_trabajo.estado 
+        FROM ordenes_trabajo 
+        INNER JOIN clientes ON ordenes_trabajo.id_cliente = clientes.id_cliente 
+        INNER JOIN vehiculos ON ordenes_trabajo.id_vehiculo = vehiculos.id_vehiculo 
+        LEFT JOIN usuarios ON ordenes_trabajo.id_usuario_asignado = usuarios.id_usuario 
+        WHERE lower(ordenes_trabajo.estado) IN ('finalizado', 'entregado') 
+        ORDER BY ordenes_trabajo.fecha_entrega DESC, ordenes_trabajo.id_orden DESC
+    ");
+} else {
+    // Si es mecánico, solo ve las suyas
+    $sql = $conexion->prepare("
+        SELECT ordenes_trabajo.id_orden, vehiculos.marca, vehiculos.placa, 
+               CONCAT(clientes.nombre, ' ', clientes.apellido) as nombre_cliente, 
+               CONCAT(usuarios.nombre, ' ', usuarios.apellido) as nombre_mecanico, 
+               ordenes_trabajo.fecha_creacion, ordenes_trabajo.fecha_entrega, ordenes_trabajo.estado 
+        FROM ordenes_trabajo 
+        INNER JOIN clientes ON ordenes_trabajo.id_cliente = clientes.id_cliente 
+        INNER JOIN vehiculos ON ordenes_trabajo.id_vehiculo = vehiculos.id_vehiculo 
+        INNER JOIN usuarios ON ordenes_trabajo.id_usuario_asignado = usuarios.id_usuario 
+        WHERE ordenes_trabajo.id_usuario_asignado = :id_mecanico 
+        AND lower(ordenes_trabajo.estado) IN ('finalizado', 'entregado') 
+        ORDER BY ordenes_trabajo.fecha_entrega DESC, ordenes_trabajo.id_orden DESC
+    ");
+    $sql->bindParam(':id_mecanico', $id_usuario, PDO::PARAM_INT);
+}
+
 $sql->execute();
 $ordenes = $sql->fetchAll(PDO::FETCH_ASSOC);
 
 if (empty($ordenes)) {
     $_SESSION['errores'] = ["No hay registros de órdenes finalizadas para generar el reporte."];
-    header("Location: ../mecanico/gestion_ordenes_trabajo_finalizadas.php");
+    header("Location: " . $_SERVER['HTTP_REFERER']);
     exit();
 }
 

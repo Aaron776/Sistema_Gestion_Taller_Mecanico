@@ -8,15 +8,13 @@ require_once "../vendor/autoload.php";
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-// Seguridad
 if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin') {
     exit("Acceso denegado");
 }
 
-// Obtener datos
-$sql = $conexion->prepare("SELECT nombre, descripcion, precio, stock FROM repuestos ORDER BY nombre");
+$sql = $conexion->prepare("SELECT nombre_servicio, descripcion, precio_base FROM servicios ORDER BY nombre_servicio");
 $sql->execute();
-$repuestos = $sql->fetchAll(PDO::FETCH_ASSOC);
+$servicios = $sql->fetchAll(PDO::FETCH_ASSOC);
 
 $fechaActual = date('d/m/Y H:i A');
 $generadoPor = $_SESSION['nombre'] . ' ' . $_SESSION['apellido'];
@@ -27,9 +25,9 @@ $html = '
 <head>
     <style>
         body { font-family: "DejaVu Sans", sans-serif; color: #333; margin: 0; padding: 0; }
-        .header { background-color: #1a3a5f; color: white; padding: 30px; border-bottom: 5px solid #f8b400; }
+        .header { background-color: #1a3a5f; color: white; padding: 30px; border-bottom: 5px solid #3abaf4; }
         .header table { width: 100%; border-collapse: collapse; }
-        .logo-text { font-size: 28px; font-weight: bold; color: #f8b400; }
+        .logo-text { font-size: 28px; font-weight: bold; color: #3abaf4; }
         .report-title { font-size: 20px; text-transform: uppercase; margin-top: 5px; }
         .meta-info { font-size: 11px; margin-top: 15px; color: #cbd5e0; }
         
@@ -38,10 +36,6 @@ $html = '
         table.data-table th { background-color: #f8f9fc; color: #1a3a5f; text-align: left; padding: 12px; font-size: 12px; border-bottom: 2px solid #e2e8f0; }
         table.data-table td { padding: 12px; font-size: 11px; border-bottom: 1px solid #edf2f7; vertical-align: middle; }
         table.data-table tr:nth-child(even) { background-color: #fdfdfd; }
-        
-        .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-        .status-low { background-color: #f8d7da; color: #721c24; }
-        .status-ok { background-color: #d4edda; color: #155724; }
         
         .footer { position: fixed; bottom: 0; width: 100%; font-size: 10px; text-align: center; color: #a0aec0; padding: 20px; }
         .page-number:after { content: counter(page); }
@@ -53,7 +47,7 @@ $html = '
             <tr>
                 <td>
                     <div class="logo-text">AUTOTECH</div>
-                    <div class="report-title">Inventario de Repuestos</div>
+                    <div class="report-title">Reporte de Servicios Oficiales</div>
                 </td>
                 <td style="text-align: right;">
                     <div class="meta-info">
@@ -69,28 +63,25 @@ $html = '
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>NOMBRE</th>
+                    <th>SERVICIO</th>
                     <th>DESCRIPCIÓN</th>
-                    <th>PRECIO UNITARIO</th>
-                    <th>STOCK DISPONIBLE</th>
+                    <th>PRECIO BASE</th>
                 </tr>
             </thead>
             <tbody>';
 
-if (empty($repuestos)) {
+if (empty($servicios)) {
     $html .= '
                 <tr>
-                    <td colspan="4" style="text-align: center; padding: 40px; color: #718096; font-size: 14px;">No se encontraron registros para generar el reporte.</td>
+                    <td colspan="3" style="text-align: center; padding: 40px; color: #718096; font-size: 14px;">No se encontraron registros para generar el reporte.</td>
                 </tr>';
 } else {
-    foreach ($repuestos as $r) {
-        $stockBadge = ($r['stock'] < 10) ? '<span class="status-badge status-low">BAJO: ' . $r['stock'] . '</span>' : '<span class="status-badge status-ok">OK: ' . $r['stock'] . '</span>';
+    foreach ($servicios as $s) {
         $html .= '
                 <tr>
-                    <td><strong>' . htmlspecialchars($r['nombre']) . '</strong></td>
-                    <td>' . htmlspecialchars($r['descripcion']) . '</td>
-                    <td><strong>$' . number_format($r['precio'], 2) . '</strong></td>
-                    <td>' . $stockBadge . '</td>
+                    <td><strong>' . htmlspecialchars($s['nombre_servicio']) . '</strong></td>
+                    <td>' . htmlspecialchars($s['descripcion']) . '</td>
+                    <td><strong>$' . number_format($s['precio_base'], 2) . '</strong></td>
                 </tr>';
     }
 }
@@ -117,4 +108,4 @@ $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
-$dompdf->stream("reporte_repuestos.pdf", ["Attachment" => true]);
+$dompdf->stream("reporte_servicios.pdf", ["Attachment" => true]);

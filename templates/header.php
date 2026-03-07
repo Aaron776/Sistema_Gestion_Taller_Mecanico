@@ -949,6 +949,12 @@ $base_url = $depth > 0 ? str_repeat('../', $depth) : '';
                                 <span class="menu-text">Bitacora</span>
                             </a>
                         </li>
+                        <li>
+                            <a href="<?php echo $base_url; ?>admin/reportes.php">
+                                <i class="fas fa-chart-bar"></i>
+                                <span class="menu-text">Reportes</span>
+                            </a>
+                        </li>
                     <?php } else if ($_SESSION['rol'] == 'recepcionista') { ?>
                         <li>
                             <a href="<?php echo $base_url; ?>recepcionista/dash_recepcionista.php">
